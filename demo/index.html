@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bhraman भ्रमण — Plan your trip</title>
+<style>
+  :root{--maroon:#800020;--maroon-dark:#5c0014;--cream:#fff8e7;--cream-dark:#f5ead0;--ink:#2b0a12;--muted:#7a5a5e;--bg:#fff8e7;--line:#e8dcc3}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+  header{background:linear-gradient(135deg,#5c0014,#800020 55%,#a63a3a);color:#fff8e7;padding:18px 16px}
+  .wrap{max-width:820px;margin:0 auto;padding:0 16px}
+  header h1{margin:0;font-size:26px} header h1 span{font-weight:400}
+  header p{margin:6px 0 0;font-size:15px} header .sub{opacity:.85;font-size:13px;max-width:640px}
+  main{padding:16px 0 24px}
+  #chat{display:flex;flex-direction:column;gap:14px;min-height:320px;padding-bottom:8px}
+  .row{display:flex;gap:10px;align-items:flex-start} .row.user{justify-content:flex-end}
+  .avatar{width:36px;height:36px;border-radius:50%;flex:0 0 36px;display:flex;align-items:center;justify-content:center;font-size:18px;background:#fffdf0;border:1px solid var(--line)}
+  .bubble{max-width:86%;border-radius:18px;padding:13px 15px;line-height:1.55;font-size:15px;box-shadow:0 1px 6px rgba(0,0,0,.06)}
+  .row.assistant .bubble{background:#fffdf0;border:1px solid var(--line);border-top-left-radius:6px}
+  .row.user .bubble{background:var(--maroon);color:#fff;border-top-right-radius:6px}
+  .bubble p{margin:0 0 8px} .bubble p:last-child{margin-bottom:0}
+  .parsed{background:#fff8e7;border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13px;margin:8px 0}
+  .it{border:1px solid var(--line);border-radius:14px;padding:13px;margin-top:10px;background:#fffdf0}
+  .it.top{border-color:var(--maroon);box-shadow:0 3px 14px rgba(128,0,32,.18)}
+  .it-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .rank{font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--maroon-dark)}
+  .total{font-size:24px;font-weight:800} .total small{display:block;font-size:12px;font-weight:600;color:var(--muted)}
+  .mode{font-size:17px;font-weight:800;text-transform:capitalize}
+  .badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:800}
+  .b-live{background:#800020;color:#fff8e7} .b-ind{background:#fff8e7;color:#800020;border:1px solid #800020} .b-sample{background:#f5ead0;color:#5c0014}
+  .mini{background:#fff8e7;border:1px solid var(--line);border-radius:10px;padding:10px;font-size:13px;line-height:1.5;margin-top:10px}
+  ul.notes{margin:8px 0 0;padding-left:20px;line-height:1.5;font-size:14px}
+  .rejected{background:#fdeee6;border:1px solid #e8dcc3;border-radius:12px;padding:11px 12px;margin-top:10px;font-size:14px}
+  #chips{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 12px}
+  .chip{cursor:pointer;background:#fffdf0;border:1px solid var(--maroon);color:var(--maroon-dark);border-radius:999px;padding:8px 13px;font-size:13px;font-weight:600}
+  #composer{position:sticky;bottom:0;background:var(--bg);padding:10px 0 16px}
+  #composer .box{display:flex;gap:10px;align-items:flex-end;background:#fffdf0;border:1px solid var(--line);border-radius:18px;padding:8px 8px 8px 14px;box-shadow:0 2px 14px rgba(128,0,32,.10)}
+  #msg{flex:1;border:0;outline:none;resize:none;font-size:16px;font-family:inherit;line-height:1.4;max-height:120px;padding:8px 0;background:transparent}
+  #send{cursor:pointer;border:0;border-radius:999px;padding:11px 18px;font-size:15px;font-weight:700;background:var(--maroon);color:#fff}
+  .hint{color:var(--muted);font-size:12px;margin-top:8px;line-height:1.5}
+  a{color:var(--maroon-dark);font-weight:700}
+  @media(max-width:680px){.bubble{max-width:92%}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <h1>Bhraman <span>भ्रमण</span></h1>
+  <p>हर सफ़र, एक कहानी — Every journey, a story</p>
+  <p class="sub">Tell me where you need to go, in your own words, and I will plan the whole journey door to door — flight vs train vs bus, plus hotel and last mile. Standalone demo: all totals are computed in your browser from the same sample data as the FastAPI version. No live booking APIs.</p>
+</div></header>
+<main class="wrap">
+  <div id="chat" aria-live="polite"></div>
+  <div id="chips" aria-label="Try these">
+    <button class="chip" type="button">I have to go from Mumbai to Pune, I landed at 06:00, help me plan</button>
+    <button class="chip" type="button">I have to go from Pune to Delhi, budget Rs 9000, help me plan</button>
+    <button class="chip" type="button">Plan a trip from Pune to Delhi for 2 people</button>
+  </div>
+  <div id="composer"><form id="chatForm" class="box">
+    <textarea id="msg" rows="1" placeholder="I have to go from Mumbai to Pune, help me plan…" aria-label="Type your trip"></textarea>
+    <button id="send" type="submit">Send →</button>
+  </form>
+  <p class="hint">Demo data only: Mumbai → Pune and Pune → Delhi, on 2026-11-14. Totals are computed in code, never invented. Train availability is INDICATIVE — there is no public IRCTC booking API. Press Enter to send, Shift+Enter for a new line.</p></div>
+</main>
+<script>
+const LEGS=[
+ {origin:"PNQ",destination:"DEL",mode:"flight",provider:"Sample Air (offline data)",depart:"2026-11-14T06:10:00",arrive:"2026-11-14T08:20:00",duration_min:130,price_inr:5499,baggage_kg:15,tier:2,deep_link:null},
+ {origin:"PNQ",destination:"DEL",mode:"train",provider:"Indian Railways (offline timetable)",depart:"2026-11-14T11:10:00",arrive:"2026-11-15T09:30:00",duration_min:1340,price_inr:1890,baggage_kg:null,tier:2,deep_link:null},
+ {origin:"PNQ",destination:"DEL",mode:"bus",provider:"Intercity bus (offline data)",depart:"2026-11-14T17:00:00",arrive:"2026-11-15T20:00:00",duration_min:1620,price_inr:1499,baggage_kg:20,tier:3,deep_link:"https://www.redbus.in"},
+ {origin:"BOM",destination:"PNQ",mode:"flight",provider:"Sample Air (offline data)",depart:"2026-11-14T07:05:00",arrive:"2026-11-14T08:05:00",duration_min:60,price_inr:3200,baggage_kg:15,tier:2,deep_link:null},
+ {origin:"BOM",destination:"PNQ",mode:"train",provider:"Indian Railways (offline timetable)",depart:"2026-11-14T06:30:00",arrive:"2026-11-14T09:50:00",duration_min:200,price_inr:420,baggage_kg:null,tier:2,deep_link:null},
+ {origin:"BOM",destination:"PNQ",mode:"bus",provider:"Intercity bus (offline data)",depart:"2026-11-14T09:15:00",arrive:"2026-11-14T13:15:00",duration_min:240,price_inr:650,baggage_kg:20,tier:3,deep_link:"https://www.redbus.in"},
+ {origin:"BOM",destination:"PNQ",mode:"train",provider:"Indian Railways (offline timetable)",depart:"2026-11-14T11:30:00",arrive:"2026-11-14T14:55:00",duration_min:205,price_inr:455,baggage_kg:null,tier:2,deep_link:null},
+ {origin:"BOM",destination:"PNQ",mode:"train",provider:"Indian Railways (offline timetable)",depart:"2026-11-14T15:40:00",arrive:"2026-11-14T19:05:00",duration_min:205,price_inr:455,baggage_kg:null,tier:2,deep_link:null}
+];
+const HOTELS=[
+ {city:"DEL",name:"Hotel City Star (sample)",area:"Paharganj",price_per_night_inr:1800,rating:3.9},
+ {city:"DEL",name:"The Metropolitan (sample)",area:"Connaught Place",price_per_night_inr:4500,rating:4.4},
+ {city:"PNQ",name:"Hotel Shreyas (sample)",area:"Deccan Gymkhana",price_per_night_inr:2200,rating:4.1},
+ {city:"PNQ",name:"Koregaon Grand (sample)",area:"Koregaon Park",price_per_night_inr:6800,rating:4.7}
+];
+const GROUND=[
+ {city:"DEL",mode:"metro",cost_inr:60,duration_min:45},{city:"DEL",mode:"auto",cost_inr:300,duration_min:35},{city:"DEL",mode:"cab",cost_inr:650,duration_min:40},
+ {city:"PNQ",mode:"metro",cost_inr:40,duration_min:30},{city:"PNQ",mode:"auto",cost_inr:250,duration_min:25},{city:"PNQ",mode:"cab",cost_inr:450,duration_min:30}
+];
+const CITY={mumbai:"BOM",bombay:"BOM",bom:"BOM",pune:"PNQ",pnq:"PNQ",delhi:"DEL",del:"DEL",dubai:"BOM"};
+const CITYNAME={BOM:"Mumbai",PNQ:"Pune",DEL:"Delhi"};
+const chatEl=document.getElementById('chat'),msgEl=document.getElementById('msg');
+const inr=n=>'₹'+Number(n).toLocaleString('en-IN');
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt=iso=>iso?iso.replace('T',' '):'';
+const tierLabel=t=>t===1?'LIVE':t===2?'INDICATIVE':'SAMPLE';
+const badgeClass=t=>t===1?'b-live':t===2?'b-ind':'b-sample';
+const dur=m=>Math.floor(m/60)+'h '+String(m%60).padStart(2,'0')+'m';
+function addUser(t){const d=document.createElement('div');d.className='row user';d.innerHTML='<div class="bubble"><p>'+esc(t)+'</p></div><div class="avatar">🧑</div>';chatEl.appendChild(d);chatEl.scrollIntoView({block:'end'});}
+function addAssistant(html){const d=document.createElement('div');d.className='row assistant';d.innerHTML='<div class="avatar">✈️</div><div class="bubble">'+html+'</div>';chatEl.appendChild(d);chatEl.scrollIntoView({block:'end'});}
+function parse(text){
+  const low=text.toLowerCase();
+  let origin=null,destination=null;
+  const m=low.match(/(?:from\s+)?(mumbai|bombay|pune|delhi|dubai)\s+(?:to|->|-)\s+(mumbai|bombay|pune|delhi)/);
+  if(m){origin=CITY[m[1]];destination=CITY[m[2]];}
+  else{const found=[...low.matchAll(/\b(mumbai|bombay|pune|delhi|dubai)\b/g)].map(x=>CITY[x[1]]);if(found.length>=2){origin=found[0];destination=found[1];}}
+  if(origin==='BOM'&&destination==='BOM')destination='PNQ';
+  let passengers=1;const pm=low.match(/(\d+)\s*(?:people|persons|travellers|travelers|passengers)/);if(pm)passengers=parseInt(pm[1]);
+  let nights=1;const nm=low.match(/(\d+)\s*nights?/);if(nm)nights=parseInt(nm[1]);
+  let budget=null;const bm=low.match(/(?:rs\.?|₹)\s*([\d,]+)|([\d,]+)\s*(?:max|budget)/);if(bm)budget=parseInt((bm[1]||bm[2]).replace(/,/g,''));
+  let baggage=0;const kg=low.match(/(\d+)\s*kg/);if(kg)baggage=parseInt(kg[1]);
+  let landed=null;const lm=low.match(/(?:landed|arrived|landing)\s*(?:at\s*)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/);
+  if(lm){let h=parseInt(lm[1]);if(lm[3]==='pm'&&h<12)h+=12;if(lm[3]==='am'&&h===12)h=0;landed='2026-11-14T'+String(h).padStart(2,'0')+':'+(lm[2]||'00')+':00';}
+  let earliest=null;if(landed){const d=new Date(landed);d.setHours(d.getHours()+4);earliest=d.toISOString().slice(0,19);}
+  return {origin,destination,passengers,nights,budget,baggage,landed,earliest};
+}
+function plan(q){
+  const hotel=HOTELS.filter(h=>h.city===q.destination).sort((a,b)=>a.price_per_night_inr-b.price_per_night_inr)[0];
+  const ground=GROUND.filter(g=>g.city===q.destination).sort((a,b)=>a.cost_inr-b.cost_inr)[0];
+  const ranked=[],rejected=[];
+  for(const leg of LEGS.filter(l=>l.origin===q.origin&&l.destination===q.destination)){
+    if(q.earliest&&leg.depart<q.earliest){rejected.push({leg,reason:'REJECTED by international-arrival buffer: departs '+fmt(leg.depart)+' before earliest allowed '+fmt(q.earliest)+' (landed + 4h for bags + customs)'});continue;}
+    const total=leg.price_inr*q.passengers+hotel.price_per_night_inr*q.nights+ground.cost_inr;
+    if(q.budget&&total>q.budget){rejected.push({leg,reason:'REJECTED by budget: door-to-door total '+inr(total)+' is over '+inr(q.budget)});continue;}
+    const notes=[];
+    if(q.baggage&&leg.baggage_kg!==null&&q.baggage>leg.baggage_kg)notes.push('Baggage shortfall: you have '+q.baggage+' kg, this leg includes '+leg.baggage_kg+' kg — excess baggage may cost extra.');
+    if(leg.mode==='train')notes.push('Foreign Tourist Quota (FTQ): foreign tourists can book Indian trains 365 days ahead vs 60 days general, passport + international mobile OTP needed. Availability INDICATIVE.');
+    ranked.push({leg,hotel,ground,total,door:leg.duration_min+ground.duration_min,notes});
+  }
+  ranked.sort((a,b)=>a.total-b.total);
+  return {ranked,rejected,hotel,ground};
+}
+function handle(text){
+  addUser(text);
+  setTimeout(()=>{
+    const q=parse(text);
+    if(!q.origin||!q.destination||!((q.origin==='BOM'&&q.destination==='PNQ')||(q.origin==='PNQ'&&q.destination==='DEL'))){
+      addAssistant('<p>Sorry, I can only plan the demo routes right now: <b>Mumbai → Pune</b> and <b>Pune → Delhi</b>, on 2026-11-14.</p><p>Try: “I have to go from Mumbai to Pune, I landed at 06:00, help me plan”.</p>');return;
+    }
+    const {ranked,rejected}=plan(q);
+    const plain=CITYNAME[q.origin]+' → '+CITYNAME[q.destination]+' · '+q.passengers+' person'+(q.passengers>1?'s':'')+' · '+q.nights+' night'+(q.nights>1?'s':'')+(q.budget?' · budget '+inr(q.budget):' · no budget cap')+(q.landed?' · landed '+fmt(q.landed).slice(11,16)+' (onward only from '+fmt(q.earliest).slice(11,16)+' after the 4-hour buffer)':'');
+    if(!ranked.length){addAssistant('<p>No options fit that query on the demo data.</p><div class="parsed">'+esc(plain)+'</div>');return;}
+    const top=ranked[0];
+    let html='<p>Found '+ranked.length+' option'+(ranked.length>1?'s':'')+' from '+CITYNAME[q.origin]+' to '+CITYNAME[q.destination]+'. Cheapest door-to-door is '+top.leg.mode+' at '+inr(top.total)+' ('+dur(top.door)+'), including hotel and last mile.</p><div class="parsed">'+esc(plain)+'</div>';
+    ranked.forEach((r,i)=>{
+      html+='<div class="it '+(i===0?'top':'')+'"><div class="it-head"><div><span class="rank">'+(i===0?'★ Best · ':'')+'Option '+(i+1)+'</span><div class="mode">'+r.leg.mode+' · '+esc(r.leg.provider)+'</div></div><div class="total">'+inr(r.total)+'<small>door-to-door · '+dur(r.door)+'</small></div></div><span class="badge '+badgeClass(r.leg.tier)+'">'+tierLabel(r.leg.tier)+'</span><div class="mini"><b>Leg</b> '+fmt(r.leg.depart)+' → '+fmt(r.leg.arrive)+' · '+inr(r.leg.price_inr)+' per person'+(r.leg.deep_link?' · <a href="'+r.leg.deep_link+'" target="_blank" rel="noopener">Book via deep link →</a>':'')+'</div><div class="mini"><b>Hotel</b> '+esc(r.hotel.name)+' ('+esc(r.hotel.area)+') · '+inr(r.hotel.price_per_night_inr)+' / night</div><div class="mini"><b>Last mile</b> '+r.ground.mode+' · '+inr(r.ground.cost_inr)+' · '+r.ground.duration_min+' min</div><div class="mini"><b>Breakdown</b> Leg '+inr(r.leg.price_inr*q.passengers)+' + Hotel '+inr(r.hotel.price_per_night_inr*q.nights)+' + Last mile '+inr(r.ground.cost_inr)+' = '+inr(r.total)+'</div>'+(r.notes.length?'<ul class="notes">'+r.notes.map(n=>'<li>'+esc(n)+'</li>').join('')+'</ul>':'')+'</div>';
+    });
+    if(rejected.length)html+='<div class="rejected"><strong>Rejected ('+rejected.length+'):</strong><ul style="margin:6px 0 0;padding-left:20px">'+rejected.map(x=>'<li>'+esc(x.leg.mode)+' '+fmt(x.leg.depart)+' — '+esc(x.reason)+'</li>').join('')+'</ul></div>';
+    addAssistant(html);
+  },350);
+}
+document.getElementById('chatForm').addEventListener('submit',e=>{e.preventDefault();const t=msgEl.value.trim();if(!t)return;msgEl.value='';handle(t);});
+msgEl.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();document.getElementById('chatForm').requestSubmit();}});
+document.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>handle(c.textContent)));
+addAssistant('<p>Hi, I’m Bhraman. Tell me where you need to go, in your own words.</p><p>Try the chips below, or type: “I have to go from Mumbai to Pune, I landed at 06:00, help me plan”.</p>');
+</script>
+</body>
+</html>
