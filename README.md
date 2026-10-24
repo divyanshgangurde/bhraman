@@ -22,6 +22,9 @@ Built for the Indian diaspora as much as domestic travellers: international-arri
 bhraman/
 ├── README.md                  ← you are here
 ├── ARCHITECTURE.md            ← full design, with justifications
+├── api.py                     ← FastAPI app (frontend + /api/chat, /api/plan)
+├── frontend/index.html        ← AI chat frontend, maroon and cream, no build step
+├── README-FRONTEND.md         ← frontend + API instructions
 ├── main.py                    ← end-to-end demo on sample data (no API keys)
 ├── requirements.txt
 ├── .env.example               ← optional API keys (demo runs without them)
@@ -81,9 +84,12 @@ Scaffold: architecture, shared state, three agents, deterministic ranker,
 Raw-RAG memory, provider interfaces with working offline providers, eval
 harness, tests. Live adapters are interface-complete stubs.
 
-## Frontend + API (new)
+## Frontend + API — AI chat interface
 
-Single-page frontend + FastAPI wrapper over the unchanged backend.
+AI chat frontend in maroon and cream (maroon `#800020` / `#5c0014`,
+cream `#fff8e7`) + FastAPI wrapper over the unchanged backend.
+Just type, in your own words, e.g. "I have to go from Mumbai to
+Pune, I landed at 06:00, help me plan" — no form to fill.
 Full instructions: see `README-FRONTEND.md`.
 
 ```bash
@@ -93,6 +99,7 @@ uvicorn api:app --reload
 # Health:   http://127.0.0.1:8000/health
 # Presets:  http://127.0.0.1:8000/api/demo-presets
 # Plan:     POST http://127.0.0.1:8000/api/plan
+# Chat:     POST http://127.0.0.1:8000/api/chat
 ```
 
 Sample data only (BOM → PNQ and PNQ → DEL); no live Duffel / LiteAPI yet.

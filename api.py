@@ -287,6 +287,234 @@ def plan(req: PlanRequest):
     }
 
 
+# ---------------------------------------------------------------- chat
+# Natural-language chat parsing (POST /api/chat).
+# This ONLY parses words into a TravelQuery and calls plan() above.
+# It never invents a price: all totals still come from run_pipeline()
+# via the deterministic ranker, and routes outside the sample data
+# get a clarification reply, not a fabricated itinerary.
+
+import re
+
+SAMPLE_DATE = "2026-11-14"
+SAMPLE_ROUTES = {("BOM", "PNQ"), ("PNQ", "DEL")}
+CITY_WORDS = {
+    "mumbai": "BOM", "bombay": "BOM", "bom": "BOM",
+    "pune": "PNQ", "poona": "PNQ", "pnq": "PNQ",
+    "delhi": "DEL", "new delhi": "DEL", "del": "DEL",
+    "dubai": "DXB", "dxb": "DXB",
+}
+CITY_NAMES = {"BOM": "Mumbai", "PNQ": "Pune", "DEL": "Delhi", "DXB": "Dubai"}
+
+
+class ChatRequest(BaseModel):
+    message: str
+
+
+def _city_mentions(text: str) -> list[tuple[int, str]]:
+    """(position, code) for every city name/code mention, in order."""
+    found: list[tuple[int, str]] = []
+    for word, code in CITY_WORDS.items():
+        for m in re.finditer(rf"\b{re.escape(word)}\b", text):
+            found.append((m.start(), code))
+    # De-duplicate overlapping matches (e.g. "new delhi" vs "delhi"):
+    # keep the earliest start, and for the same start the longest word.
+    found.sort(key=lambda x: x[0])
+    deduped: list[tuple[int, str]] = []
+    last_end = -1
+    for pos, code in found:
+        if pos >= last_end:
+            deduped.append((pos, code))
+            # length of the matched word is not tracked; use a safe span
+            last_end = pos + 3
+    return deduped
+
+
+def _to_24h(hour: int, minute: int, ampm: str | None) -> tuple[int, int]:
+    if ampm == "pm" and hour < 12:
+        hour += 12
+    if ampm == "am" and hour == 12:
+        hour = 0
+    return hour, minute
+
+
+def _parse_chat_message(raw: str) -> dict:
+    text = (raw or "").strip()
+    low = text.lower()
+    result: dict = {
+        "origin": None, "destination": None, "passengers": 1, "nights": 1,
+        "budget_inr": None, "checked_baggage_kg": 0,
+        "international_arrival": None, "date_note": None,
+        "route_note": None,
+    }
+    if not text:
+        return result
+
+    mentions = _city_mentions(low)
+    codes_in_order = [c for _, c in mentions]
+
+    # Diaspora case first: Dubai -> Mumbai -> Pune means BOM -> PNQ.
+    if "DXB" in codes_in_order and "BOM" in codes_in_order and "PNQ" in codes_in_order:
+        result["origin"], result["destination"] = "BOM", "PNQ"
+        result["route_note"] = "Dubai to Pune via Mumbai, so the onward leg is Mumbai to Pune."
+    else:
+        m = re.search(
+            r"from\s+(new delhi|mumbai|bombay|pune|poona|delhi|bom|pnq|del)\b"
+            r".{0,40}?\bto\s+(new delhi|mumbai|bombay|pune|poona|delhi|bom|pnq|del)\b",
+            low)
+        if m:
+            result["origin"] = CITY_WORDS[m.group(1)]
+            result["destination"] = CITY_WORDS[m.group(2)]
+        else:
+            route_codes = [c for c in codes_in_order if c != "DXB"]
+            distinct: list[str] = []
+            for c in route_codes:
+                if c not in distinct:
+                    distinct.append(c)
+            if len(distinct) >= 2:
+                result["origin"], result["destination"] = distinct[0], distinct[1]
+            elif "landed" in low or "arrived" in low or "landing" in low:
+                # "landed in Mumbai, onward to Pune" etc. is handled by the
+                # from/to and distinct-city branches above in most cases;
+                # fall through to clarification if it did not resolve.
+                pass
+
+    # Budget: "Rs 9000", "₹9,000", "INR 9000", "9000 max", "budget 9000".
+    bm = re.search(r"(?:rs\.?|₹|inr|rupees?)\s*([0-9][0-9,]*)", low)
+    if not bm:
+        bm = re.search(r"([0-9][0-9,]*)\s*(?:rs\.?|₹|inr|rupees?|max|budget)\b", low)
+    if bm:
+        result["budget_inr"] = int(bm.group(1).replace(",", ""))
+
+    pm = re.search(r"(\d+)\s*(people|passengers?|persons?|travellers?|travelers?)", low)
+    if pm:
+        result["passengers"] = int(pm.group(1))
+    else:
+        fm = re.search(r"for\s+(\d+)(?!\s*nights?\b)", low)
+        if fm:
+            result["passengers"] = int(fm.group(1))
+
+    nm = re.search(r"(\d+)\s*nights?\b", low)
+    if nm:
+        result["nights"] = int(nm.group(1))
+
+    kg = re.search(r"(\d+)\s*kg\b", low)
+    if kg:
+        result["checked_baggage_kg"] = int(kg.group(1))
+
+    # International arrival: "landed at 06:00", "arrived 6am", "landing 06:00".
+    arrival_time: str | None = None
+    if re.search(r"\b(landed|arrived|landing|arrive|land)\b", low):
+        tm = re.search(r"(\d{1,2}):(\d{2})(?::\d{2})?\s*(am|pm)?", low)
+        if tm:
+            h, mi = _to_24h(int(tm.group(1)), int(tm.group(2)), tm.group(3))
+            arrival_time = f"{h:02d}:{mi:02d}"
+        else:
+            tm2 = re.search(r"(\d{1,2})\s*(am|pm)\b", low)
+            if tm2:
+                h, mi = _to_24h(int(tm2.group(1)), 0, tm2.group(2))
+                arrival_time = f"{h:02d}:{mi:02d}"
+    if arrival_time:
+        result["international_arrival"] = f"{SAMPLE_DATE}T{arrival_time}:00"
+
+    # Date: sample data is fixed to SAMPLE_DATE. Map relative dates to it
+    # openly, never invent another date's prices.
+    if "tomorrow" in low or "next friday" in low or "next week" in low or "friday" in low:
+        result["date_note"] = (
+            "Sample data is fixed to 2026-11-14, so I used that date for "
+            "this demo (your tomorrow / next Friday wording is mapped to "
+            "the sample date, not to other dates' prices)."
+        )
+    return result
+
+
+def _plain_echo(parsed: dict, earliest: str | None) -> str:
+    parts = []
+    if parsed["origin"] and parsed["destination"]:
+        parts.append(
+            f"{CITY_NAMES.get(parsed['origin'], parsed['origin'])} → "
+            f"{CITY_NAMES.get(parsed['destination'], parsed['destination'])}")
+    parts.append(f"{parsed['passengers']} person{'s' if parsed['passengers'] != 1 else ''}")
+    parts.append(f"{parsed['nights']} night{'s' if parsed['nights'] != 1 else ''}")
+    if parsed["budget_inr"]:
+        parts.append(f"budget ₹{parsed['budget_inr']:,} per person")
+    else:
+        parts.append("no budget cap")
+    if parsed["checked_baggage_kg"]:
+        parts.append(f"{parsed['checked_baggage_kg']} kg baggage")
+    if parsed["international_arrival"]:
+        parts.append(
+            f"landed {parsed['international_arrival'][11:16]} "
+            f"(onward travel only from {earliest[11:16]} after the 4-hour buffer)")
+    return " · ".join(parts)
+
+
+@app.post("/api/chat")
+def chat(req: ChatRequest):
+    parsed = _parse_chat_message(req.message)
+    origin, destination = parsed["origin"], parsed["destination"]
+
+    if not origin or not destination:
+        return {
+            "status": "clarification",
+            "assistant_text": (
+                "I could not work out both places from that. "
+                "Try something like: “I have to go from Mumbai to Pune, "
+                "I landed at 06:00, help me plan” or “I have to go from "
+                "Pune to Delhi, budget Rs 9000, help me plan”."),
+            "parsed_query": parsed,
+            "demo_routes": ["Mumbai (BOM) → Pune (PNQ)", "Pune (PNQ) → Delhi (DEL)"],
+            "ranked": [], "rejected": [], "summary": "", "counts": {"ranked": 0, "rejected": 0, "legs_found": 0},
+        }
+    if (origin, destination) not in SAMPLE_ROUTES:
+        return {
+            "status": "clarification",
+            "assistant_text": (
+                f"I understood {CITY_NAMES.get(origin, origin)} → "
+                f"{CITY_NAMES.get(destination, destination)}, but this demo "
+                "only has sample data for Mumbai → Pune and Pune → Delhi, "
+                "so I cannot price that route honestly yet. Please try one "
+                "of the demo routes above."),
+            "parsed_query": parsed,
+            "demo_routes": ["Mumbai (BOM) → Pune (PNQ)", "Pune (PNQ) → Delhi (DEL)"],
+            "ranked": [], "rejected": [], "summary": "", "counts": {"ranked": 0, "rejected": 0, "legs_found": 0},
+        }
+
+    plan_req = PlanRequest(
+        origin=origin, destination=destination, date=SAMPLE_DATE,
+        passengers=parsed["passengers"], nights=parsed["nights"],
+        budget_inr=parsed["budget_inr"],
+        checked_baggage_kg=parsed["checked_baggage_kg"],
+        international_arrival=parsed["international_arrival"],
+    )
+    out = plan(plan_req)
+    ranked = out.get("ranked", [])
+    if ranked:
+        top = ranked[0]
+        assistant_text = (
+            f"Found {len(ranked)} option{'s' if len(ranked) != 1 else ''} from "
+            f"{CITY_NAMES.get(origin, origin)} to {CITY_NAMES.get(destination, destination)}. "
+            f"Cheapest door-to-door is {top['leg']['mode']} at "
+            f"₹{top['total_inr']:,} ({top['door_to_door_display']}), "
+            "including hotel and last mile.")
+    else:
+        assistant_text = (
+            "No itinerary fits those constraints in the sample data. "
+            "Try loosening the budget or the arrival buffer, or use a demo route.")
+    return {
+        "status": "ok",
+        "assistant_text": assistant_text,
+        "parsed_query": {
+            **parsed,
+            "plain": _plain_echo(parsed, out.get("earliest_departure_applied")),
+        },
+        "date_note": parsed["date_note"],
+        "route_note": parsed["route_note"],
+        "demo_routes": ["Mumbai (BOM) → Pune (PNQ)", "Pune (PNQ) → Delhi (DEL)"],
+        **out,
+    }
+
+
 @app.get("/")
 def index():
     if FRONTEND_INDEX.exists():

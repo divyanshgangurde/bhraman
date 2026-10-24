@@ -3,230 +3,203 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Bhraman भ्रमण — One itinerary, priced door to door</title>
+<title>Bhraman भ्रमण — Plan your trip</title>
 <style>
-  :root{--saffron:#e8730c;--saffron-dark:#c25e05;--green:#0b6b4a;--ink:#1d2430;--muted:#5f6b7a;--bg:#fff8f0;--card:#ffffff;--line:#e9ddd0;--red:#b42318;--red-bg:#fef0ef;--amber:#8a5a00;--amber-bg:#fff4d6}
+  :root{--saffron:#800020;--saffron-dark:#5c0014;--maroon:#800020;--maroon-dark:#5c0014;--cream:#fff8e7;--cream-dark:#f5ead0;--green:#800020;--ink:#2b0a12;--muted:#7a5a5e;--bg:#fff8e7;--card:#fffdf0;--line:#e8dcc3;--red:#800020;--red-bg:#fdeee6;--amber:#8a5a00;--amber-bg:#fff4d6;--assistant-bg:#fffdf0;--user-bg:#800020}
   *{box-sizing:border-box}
-  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--ink);background:var(--bg)}
-  header{background:linear-gradient(135deg,#7a1f00,#e8730c 55%,#f2a33c);color:#fff;padding:28px 20px 22px}
-  .wrap{max-width:1020px;margin:0 auto;padding:0 16px}
-  h1{margin:0;font-size:34px;line-height:1.1}
-  h1 span{font-weight:400}
-  .tag{margin:8px 0 0;font-size:17px;opacity:.95}
-  .sub{margin:6px 0 0;opacity:.9;max-width:760px}
-  main{padding:20px 0 40px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 2px 12px rgba(0,0,0,.05)}
-  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-  @media(max-width:760px){.grid{grid-template-columns:1fr 1fr} h1{font-size:29px}}
-  @media(max-width:420px){.grid{grid-template-columns:1fr}}
-  label{display:block;font-size:13px;font-weight:600;margin-bottom:5px}
-  input,select{width:100%;padding:10px 11px;border:1px solid #cbd5e1;border-radius:10px;font-size:15px;background:#fff}
-  input:focus,select:focus{outline:3px solid #ffd9a8;border-color:var(--saffron)}
-  .hint{color:var(--muted);font-size:13px;margin-top:8px}
-  .row{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;align-items:center}
-  button{cursor:pointer;border:0;border-radius:999px;padding:11px 18px;font-size:15px;font-weight:700}
-  .primary{background:var(--saffron);color:#fff}
-  .primary:hover{background:var(--saffron-dark)}
-  .preset{background:#fff;border:1px solid var(--saffron);color:var(--saffron-dark)}
-  .preset:hover{background:#fff1e0}
-  .preset.active{background:var(--saffron);color:#fff}
-  #status{margin-top:12px;color:var(--muted)}
-  #results{margin-top:18px;display:grid;gap:14px}
-  .summary{white-space:pre-wrap;background:#f6f8f7;border:1px solid #dbe5df;border-radius:12px;padding:14px;line-height:1.55}
-  .banner{background:#eef7f1;border:1px solid #bfe3cd;border-radius:12px;padding:12px 14px}
-  .banner strong{color:var(--green)}
-  .rejected{background:var(--red-bg);border:1px solid #f5b5b0;border-radius:12px;padding:12px 14px}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+  header{background:linear-gradient(135deg,#5c0014,#800020 55%,#a63a3a);color:#fff8e7;padding:18px 16px}
+  .wrap{max-width:820px;margin:0 auto;padding:0 16px}
+  header h1{margin:0;font-size:26px;line-height:1.15}
+  header h1 span{font-weight:400}
+  header p{margin:6px 0 0;opacity:.95;font-size:15px}
+  header .sub{opacity:.85;font-size:13px;max-width:640px}
+  main{padding:16px 0 24px}
+  #chat{display:flex;flex-direction:column;gap:14px;min-height:320px;padding-bottom:8px}
+  .row{display:flex;gap:10px;align-items:flex-start}
+  .row.user{justify-content:flex-end}
+  .avatar{width:36px;height:36px;border-radius:50%;flex:0 0 36px;display:flex;align-items:center;justify-content:center;font-size:18px;background:#fff;border:1px solid var(--line)}
+  .row.user .avatar{background:#fff8e7;border-color:#e8dcc3}
+  .bubble{max-width:86%;border-radius:18px;padding:13px 15px;line-height:1.55;font-size:15px;box-shadow:0 1px 6px rgba(0,0,0,.06)}
+  .row.assistant .bubble{background:var(--assistant-bg);border:1px solid var(--line);border-top-left-radius:6px}
+  .row.user .bubble{background:var(--user-bg);color:#fff;border-top-right-radius:6px}
+  .bubble p{margin:0 0 8px}
+  .bubble p:last-child{margin-bottom:0}
+  .meta{color:var(--muted);font-size:13px}
+  .row.user .meta{color:rgba(255,255,255,.85)}
+  .parsed{background:#fff8e7;border:1px solid #e8dcc3;border-radius:12px;padding:10px 12px;font-size:13px;margin:8px 0}
+  .it{border:1px solid var(--line);border-radius:14px;padding:13px;margin-top:10px;background:#fffdf0}
+  .it.top{border-color:var(--maroon);box-shadow:0 3px 14px rgba(128,0,32,.18)}
+  .it-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .rank{font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--saffron-dark)}
+  .total{font-size:24px;font-weight:800}
+  .total small{display:block;font-size:12px;font-weight:600;color:var(--muted)}
+  .mode{font-size:17px;font-weight:800;text-transform:capitalize}
+  .badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:800}
+  .b-live{background:#800020;color:#fff8e7}
+  .b-ind{background:#fff8e7;color:#800020;border:1px solid #800020}
+  .b-sample{background:#f5ead0;color:#5c0014}
+  .cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px}
+  @media(max-width:680px){.cols{grid-template-columns:1fr}.bubble{max-width:92%}}
+  .mini{background:#fff8e7;border:1px solid var(--line);border-radius:10px;padding:10px;font-size:13px;line-height:1.5}
+  .mini b{display:block;margin-bottom:3px;font-size:13px}
+  ul.notes{margin:8px 0 0;padding-left:20px;line-height:1.5;font-size:14px}
+  .rejected{background:var(--red-bg);border:1px solid #f5b5b0;border-radius:12px;padding:11px 12px;margin-top:10px;font-size:14px}
   .rejected strong{color:var(--red)}
-  .it{border:1px solid var(--line);border-radius:16px;padding:16px;background:#fff}
-  .it.top{border-color:var(--saffron);box-shadow:0 4px 18px rgba(232,115,12,.18)}
-  .it-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start}
-  .rank{font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--saffron-dark)}
-  .total{font-size:28px;font-weight:800}
-  .total small{display:block;font-size:13px;font-weight:600;color:var(--muted)}
-  .mode{font-size:20px;font-weight:800;text-transform:capitalize}
-  .meta{color:var(--muted);line-height:1.5}
-  .badge{display:inline-block;padding:3px 9px;border-radius:999px;font-size:12px;font-weight:800;letter-spacing:.03em}
-  .b-live{background:#dcf5e6;color:#0b6b4a}
-  .b-ind{background:var(--amber-bg);color:var(--amber)}
-  .b-sample{background:#ece9ff;color:#4b3aa8}
-  .cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:12px}
-  @media(max-width:700px){.cols{grid-template-columns:1fr}}
-  .mini{background:#faf7f2;border:1px solid var(--line);border-radius:12px;padding:11px 12px}
-  .mini b{display:block;margin-bottom:4px}
-  ul.notes{margin:10px 0 0;padding-left:20px;line-height:1.55}
-  .empty{padding:18px;text-align:center;color:var(--muted)}
-  a.book{display:inline-block;margin-top:10px;color:var(--green);font-weight:700}
-  footer{color:var(--muted);font-size:13px;line-height:1.6;padding-bottom:30px}
-  code{background:#f1ede6;padding:1px 6px;border-radius:6px}
+  .banner{background:#fff8e7;border:1px solid #e8dcc3;border-radius:12px;padding:10px 12px;font-size:13px;margin-top:8px}
+  .typing{display:flex;gap:5px;padding:6px 2px}
+  .typing span{width:8px;height:8px;border-radius:50%;background:#98a2b3;animation:blink 1.2s infinite}
+  .typing span:nth-child(2){animation-delay:.2s}.typing span:nth-child(3){animation-delay:.4s}
+  @keyframes blink{0%,100%{opacity:.3}50%{opacity:1}}
+  #chips{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 12px}
+  .chip{cursor:pointer;background:#fffdf0;border:1px solid var(--maroon);color:var(--maroon-dark);border-radius:999px;padding:8px 13px;font-size:13px;font-weight:600}
+  .chip:hover{background:#fff8e7}
+  #composer{position:sticky;bottom:0;background:var(--bg);padding:10px 0 16px}
+  #composer .box{display:flex;gap:10px;align-items:flex-end;background:#fffdf0;border:1px solid #e8dcc3;border-radius:18px;padding:8px 8px 8px 14px;box-shadow:0 2px 14px rgba(128,0,32,.10)}
+  #msg{flex:1;border:0;outline:none;resize:none;font-size:16px;font-family:inherit;line-height:1.4;max-height:120px;padding:8px 0}
+  #send{cursor:pointer;border:0;border-radius:999px;padding:11px 18px;font-size:15px;font-weight:700;background:var(--saffron);color:#fff}
+  #send:disabled{opacity:.55;cursor:default}
+  #send:hover:not(:disabled){background:var(--saffron-dark)}
+  .hint{color:var(--muted);font-size:12px;margin-top:8px;line-height:1.5}
+  a{color:var(--maroon-dark);font-weight:700}
+  .summary{white-space:pre-wrap;font-size:13px;color:var(--muted);background:#fff8e7;border:1px solid #e8dcc3;border-radius:10px;padding:10px;margin-top:10px}
 </style>
 </head>
 <body>
 <header>
   <div class="wrap">
     <h1>Bhraman <span>भ्रमण</span></h1>
-    <p class="tag">हर सफ़र, एक कहानी — Every journey, a story</p>
-    <p class="sub">One itinerary, priced door to door: flight vs train vs bus, plus hotel and the last mile. Totals are computed in code, never invented by the model. Sample data only in this demo — no live Duffel / LiteAPI yet.</p>
+    <p>हर सफ़र, एक कहानी — Every journey, a story</p>
+    <p class="sub">Tell me where you need to go, in your own words, and I will plan the whole journey door to door — flight vs train vs bus, plus hotel and last mile.</p>
   </div>
 </header>
 
 <main class="wrap">
-  <section class="card" aria-label="Plan a trip">
-    <form id="planForm">
-      <div class="grid">
-        <div>
-          <label for="origin">Origin (code)</label>
-          <input id="origin" list="codes" value="BOM" required>
-        </div>
-        <div>
-          <label for="destination">Destination (code)</label>
-          <input id="destination" list="codes" value="PNQ" required>
-        </div>
-        <div>
-          <label for="date">Date</label>
-          <input id="date" type="date" value="2026-11-14" required>
-        </div>
-        <div>
-          <label for="passengers">Passengers</label>
-          <input id="passengers" type="number" min="1" max="9" value="1" required>
-        </div>
-        <div>
-          <label for="nights">Nights</label>
-          <input id="nights" type="number" min="0" max="30" value="1" required>
-        </div>
-        <div>
-          <label for="budget">Budget per person (₹, optional)</label>
-          <input id="budget" type="number" min="0" placeholder="e.g. 9000">
-        </div>
-        <div>
-          <label for="baggage">Checked baggage (kg)</label>
-          <input id="baggage" type="number" min="0" value="0">
-        </div>
-        <div>
-          <label for="arrival">International arrival (optional)</label>
-          <input id="arrival" type="datetime-local" value="2026-11-14T06:00">
-          <div class="hint" style="margin-top:4px">Sets earliest onward departure = arrival + 4h.</div>
-        </div>
-      </div>
-      <datalist id="codes"><option value="BOM"><option value="PNQ"><option value="DEL"></datalist>
-      <p class="hint">Sample data covers <b>BOM → PNQ</b> and <b>PNQ → DEL</b> only. Other routes will return no results gracefully — that is honest sample-data behaviour, not a crash.</p>
-      <div class="row">
-        <button class="primary" type="submit">Plan my trip →</button>
-        <button class="preset" type="button" id="presetDiaspora">✈️ Dubai → Mumbai 06:00 → Pune</button>
-        <button class="preset" type="button" id="presetBudget">₹ Pune → Delhi, ₹9,000 budget</button>
-        <button type="button" id="clearArrival" style="background:#eef1f4;color:#334155">Clear arrival</button>
-      </div>
-      <div id="status" role="status"></div>
+  <div id="chat" aria-live="polite"></div>
+
+  <div id="chips" aria-label="Try these">
+    <button class="chip" type="button">I have to go from Mumbai to Pune, I landed at 06:00, help me plan</button>
+    <button class="chip" type="button">I have to go from Pune to Delhi, budget Rs 9000, help me plan</button>
+    <button class="chip" type="button">Plan a trip from Pune to Delhi for 2 people</button>
+  </div>
+
+  <div id="composer">
+    <form id="chatForm" class="box">
+      <textarea id="msg" rows="1" placeholder="I have to go from Mumbai to Pune, help me plan…" aria-label="Type your trip"></textarea>
+      <button id="send" type="submit">Send →</button>
     </form>
-  </section>
-
-  <div id="results"></div>
-
-  <footer>
-    <p><b>How to read a result:</b> <span class="badge b-live">LIVE</span> = live API (tier 1) &nbsp; <span class="badge b-ind">INDICATIVE</span> = offline dataset / sample (tier 2) &nbsp; <span class="badge b-sample">SAMPLE • Deep-link</span> = deep-link only (tier 3). Train availability is always INDICATIVE — there is no public IRCTC booking API. The ranker rejects onward legs before the buffer, filters over-budget totals, and flags baggage shortfalls; it never hides them.</p>
-    <p>API: <code>POST /api/plan</code> · <code>GET /api/demo-presets</code> · <code>GET /health</code> · See <code>README-FRONTEND.md</code> to run it.</p>
-  </footer>
+    <p class="hint">Demo data only: Mumbai → Pune and Pune → Delhi, on 2026-11-14. Totals are computed in code, never invented. Train availability is INDICATIVE — there is no public IRCTC booking API. Press Enter to send, Shift+Enter for a new line.</p>
+  </div>
 </main>
 
 <script>
-const $ = (id) => document.getElementById(id);
-const inr = (n) => "₹" + Number(n).toLocaleString("en-IN");
-const fmtTime = (iso) => iso ? iso.replace("T", " ") : "";
-const badgeClass = (label) => label === "LIVE" ? "b-live" : (label && label.includes("SAMPLE") ? "b-sample" : "b-ind");
-const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const chatEl = document.getElementById('chat');
+const msgEl = document.getElementById('msg');
+const sendBtn = document.getElementById('send');
+const inr = (n) => '₹' + Number(n).toLocaleString('en-IN');
+const fmtTime = (iso) => iso ? iso.replace('T', ' ') : '';
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const badgeClass = (l) => l === 'LIVE' ? 'b-live' : (l && l.includes('SAMPLE') ? 'b-sample' : 'b-ind');
 
-function setForm(q, arrivalValue) {
-  $("origin").value = q.origin; $("destination").value = q.destination; $("date").value = q.date;
-  $("passengers").value = q.passengers; $("nights").value = q.nights;
-  $("budget").value = q.budget_inr ?? "";
-  $("baggage").value = q.checked_baggage_kg ?? 0;
-  $("arrival").value = arrivalValue ?? (q.international_arrival ? q.international_arrival.slice(0,16) : "");
+function addUser(text){
+  const div = document.createElement('div');
+  div.className = 'row user';
+  div.innerHTML = '<div class="bubble"><p>' + esc(text) + '</p></div><div class="avatar">🧑</div>';
+  chatEl.appendChild(div); scrollChat();
 }
-
-function readForm() {
-  const budget = $("budget").value.trim();
-  const arrival = $("arrival").value.trim();
-  return {
-    origin: $("origin").value.trim(), destination: $("destination").value.trim(),
-    date: $("date").value, passengers: parseInt($("passengers").value || "1", 10),
-    nights: parseInt($("nights").value || "0", 10),
-    budget_inr: budget === "" ? null : parseInt(budget, 10),
-    checked_baggage_kg: parseInt($("baggage").value || "0", 10),
-    international_arrival: arrival === "" ? null : arrival,
-    earliest_departure: null
-  };
+function addAssistant(html){
+  const div = document.createElement('div');
+  div.className = 'row assistant';
+  div.innerHTML = '<div class="avatar">✈️</div><div class="bubble">' + html + '</div>';
+  chatEl.appendChild(div); scrollChat(); return div;
 }
+function addTyping(){
+  const div = document.createElement('div');
+  div.className = 'row assistant'; div.id = 'typingRow';
+  div.innerHTML = '<div class="avatar">✈️</div><div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>';
+  chatEl.appendChild(div); scrollChat(); return div;
+}
+function scrollChat(){ window.scrollTo({top: document.body.scrollHeight, behavior: 'smooth'}); }
 
-function render(data) {
-  const el = $("results");
-  let html = "";
-  if (data.buffer_note) html += `<div class="banner"><strong>Buffer applied.</strong> ${esc(data.buffer_note)}</div>`;
-  if (data.summary) html += `<div class="summary">${esc(data.summary)}</div>`;
-  if (data.rejected && data.rejected.length) {
-    html += `<div><h2 style="margin:14px 0 8px">Rejected / excluded — and why</h2>` + data.rejected.map(r => `
-      <div class="rejected" style="margin-bottom:10px">
-        <strong>✕ ${esc(r.leg.mode)} via ${esc(r.leg.provider)}</strong>
-        <span class="badge ${badgeClass(r.tier_label)}">${esc(r.tier_label)}</span>
-        <div class="meta">${esc(r.leg.origin)} → ${esc(r.leg.destination)} · departs ${fmtTime(r.leg.depart)} · arrives ${fmtTime(r.leg.arrive)} · ${inr(r.leg.price_inr)} per person</div>
-        <div style="margin-top:6px">${esc(r.reason)}</div>
-      </div>`).join("") + `</div>`;
+function renderAssistant(data){
+  if (data.status === 'clarification'){
+    let html = '<p>' + esc(data.assistant_text) + '</p>';
+    html += '<p class="meta">Demo routes I can price right now: Mumbai → Pune, Pune → Delhi.</p>';
+    return html;
   }
-  if (!data.ranked || !data.ranked.length) {
-    html += `<div class="card empty"><h2 style="margin:0 0 6px;color:var(--ink)">No itinerary fits these constraints</h2><p style="margin:0">Try loosening the budget, removing the international-arrival buffer, or using a demo preset (BOM → PNQ or PNQ → DEL on 2026-11-14).</p></div>`;
+  let html = '<p>' + esc(data.assistant_text) + '</p>';
+  if (data.parsed_query && data.parsed_query.plain){
+    html += '<div class="parsed">📋 Understood as: ' + esc(data.parsed_query.plain) + '</div>';
+  }
+  if (data.date_note) html += '<div class="banner">' + esc(data.date_note) + '</div>';
+  if (data.buffer_note) html += '<div class="banner"><strong>Buffer applied.</strong> ' + esc(data.buffer_note) + '</div>';
+  if (data.rejected && data.rejected.length){
+    html += '<div><p style="margin:10px 0 6px"><strong>Rejected / excluded — and why</strong></p>' + data.rejected.map(r =>
+      '<div class="rejected"><strong>✕ ' + esc(r.leg.mode) + ' via ' + esc(r.leg.provider) + '</strong> ' +
+      '<span class="badge ' + badgeClass(r.tier_label) + '">' + esc(r.tier_label) + '</span>' +
+      '<div>' + esc(r.leg.origin) + ' → ' + esc(r.leg.destination) + ' · departs ' + fmtTime(r.leg.depart) + ' · ' + inr(r.leg.price_inr) + ' per person</div>' +
+      '<div style="margin-top:4px">' + esc(r.reason) + '</div></div>'
+    ).join('') + '</div>';
+  }
+  if (!data.ranked || !data.ranked.length){
+    html += '<p>No itinerary fits those constraints in the sample data. Try loosening the budget or the arrival buffer, or use a demo route above.</p>';
   } else {
-    html += `<h2 style="margin:14px 0 4px">Ranked door-to-door — cheapest first (${data.ranked.length} option${data.ranked.length>1?"s":""})</h2>`;
+    html += '<p style="margin-top:10px"><strong>Ranked door-to-door — cheapest first</strong></p>';
     html += data.ranked.map(it => {
       const leg = it.leg, hotel = it.hotel, ground = it.ground;
-      const notes = (it.notes||[]).map(n => `<li>${esc(n)}</li>`).join("");
-      return `<article class="it ${it.rank===1?"top":""}">
-        <div class="it-head">
-          <div><div class="rank">${it.rank===1?"★ Best value — ":""}Option ${it.rank}</div>
-          <div class="mode">${esc(leg.mode)} · ${esc(leg.provider)}</div>
-          <div class="meta">${esc(leg.origin)} → ${esc(leg.destination)} · departs ${fmtTime(leg.depart)} · arrives ${fmtTime(leg.arrive)} · leg ${leg.duration_min} min${leg.refundable?", refundable":""}</div></div>
-          <div style="text-align:right"><div class="total">${inr(it.total_inr)}</div><small style="color:var(--muted)">total, whole party · ${esc(it.door_to_door_display)} door-to-door</small></div>
-        </div>
-        <div style="margin-top:10px"><span class="badge ${badgeClass(it.leg_tier_label)}">${esc(it.leg_tier_label)}</span> ${leg.deep_link ? `<a class="book" href="${esc(leg.deep_link)}" target="_blank" rel="noopener">Book via deep link →</a>` : ""}</div>
-        <div class="cols">
-          <div class="mini"><b>🚍 Leg</b>${inr(leg.price_inr)} per person${leg.baggage_kg!=null?` · baggage allowance ${leg.baggage_kg} kg`:" · no practical baggage limit (train)"}<br><span class="meta">${esc(leg.notes||"")}</span></div>
-          <div class="mini"><b>🏨 Hotel${hotel?` — ${esc(hotel.name)}`:""}</b>${hotel?`${esc(hotel.area)}, ${esc(hotel.city)} · ${inr(hotel.price_per_night_inr)}/night${hotel.rating?` · ★ ${hotel.rating}`:""}${hotel.distance_to_arrival_km!=null?` · ${hotel.distance_to_arrival_km} km from arrival`:""}`:"No hotel in this itinerary"}<br><span class="meta">${hotel?`Hotel total: ${inr(it.breakdown.hotel_total_inr)}`:""}</span></div>
-          <div class="mini"><b>🚕 Last mile${ground?` — ${esc(ground.mode)}`:""}</b>${ground?`${esc(ground.from_point)} → ${esc(ground.to_point)} · ${ground.duration_min} min · ${inr(ground.cost_inr)}`:"No last-mile option"}${ground&&ground.deep_link?`<br><a class="book" href="${esc(ground.deep_link)}" target="_blank" rel="noopener">Ride deep link →</a>`:""}</div>
-        </div>
-        <div class="meta" style="margin-top:10px">Breakdown: leg ${inr(it.breakdown.leg_total_inr)} + hotel ${inr(it.breakdown.hotel_total_inr)} + last mile ${inr(it.breakdown.ground_cost_inr)} = <b>${inr(it.total_inr)}</b></div>
-        ${notes ? `<ul class="notes">${notes}</ul>` : ""}
-      </article>`;
-    }).join("");
+      const notes = (it.notes || []).map(n => '<li>' + esc(n) + '</li>').join('');
+      return '<div class="it ' + (it.rank === 1 ? 'top' : '') + '">' +
+        '<div class="it-head"><div><div class="rank">' + (it.rank === 1 ? '★ Best value — ' : '') + 'Option ' + it.rank + '</div>' +
+        '<div class="mode">' + esc(leg.mode) + ' · ' + esc(leg.provider) + '</div>' +
+        '<div class="meta">' + esc(leg.origin) + ' → ' + esc(leg.destination) + ' · departs ' + fmtTime(leg.depart) + ' · arrives ' + fmtTime(leg.arrive) + '</div></div>' +
+        '<div style="text-align:right"><div class="total">' + inr(it.total_inr) + '</div><small class="meta">' + esc(it.door_to_door_display) + ' door-to-door</small></div></div>' +
+        '<div style="margin-top:8px"><span class="badge ' + badgeClass(it.leg_tier_label) + '">' + esc(it.leg_tier_label) + '</span>' +
+        (leg.deep_link ? ' <a href="' + esc(leg.deep_link) + '" target="_blank" rel="noopener">Book via deep link →</a>' : '') + '</div>' +
+        '<div class="cols">' +
+        '<div class="mini"><b>Leg</b>' + inr(leg.price_inr) + ' per person' + (leg.baggage_kg != null ? ' · baggage ' + leg.baggage_kg + ' kg' : ' · no practical baggage limit (train)') + '</div>' +
+        '<div class="mini"><b>Hotel' + (hotel ? ' — ' + esc(hotel.name) : '') + '</b>' + (hotel ? esc(hotel.area) + ', ' + esc(hotel.city) + ' · ' + inr(hotel.price_per_night_inr) + '/night' : 'No hotel in this itinerary') + '</div>' +
+        '<div class="mini"><b>Last mile' + (ground ? ' — ' + esc(ground.mode) : '') + '</b>' + (ground ? esc(ground.from_point) + ' → ' + esc(ground.to_point) + ' · ' + ground.duration_min + ' min · ' + inr(ground.cost_inr) : 'No last-mile option') + '</div>' +
+        '</div>' +
+        '<div class="meta" style="margin-top:8px">Breakdown: leg ' + inr(it.breakdown.leg_total_inr) + ' + hotel ' + inr(it.breakdown.hotel_total_inr) + ' + last mile ' + inr(it.breakdown.ground_cost_inr) + ' = <b>' + inr(it.total_inr) + '</b></div>' +
+        (notes ? '<ul class="notes">' + notes + '</ul>' : '') +
+        '</div>';
+    }).join('');
   }
-  el.innerHTML = html;
-  el.scrollIntoView({behavior:"smooth", block:"start"});
+  if (data.summary) html += '<div class="summary">' + esc(data.summary) + '</div>';
+  return html;
 }
 
-async function submit(presetQuery) {
-  const payload = presetQuery || readForm();
-  $("status").textContent = "Planning… running Fare, Hotel and Ground agents and ranking door-to-door.";
-  $("results").innerHTML = "";
+async function sendMessage(text){
+  text = (text || '').trim();
+  if (!text) return;
+  addUser(text);
+  msgEl.value = ''; msgEl.style.height = 'auto';
+  sendBtn.disabled = true;
+  const typing = addTyping();
   try {
-    const res = await fetch("/api/plan", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(payload)});
-    if (!res.ok) throw new Error("Server returned " + res.status);
+    const res = await fetch('/api/chat', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({message: text})});
+    if (!res.ok) throw new Error('Server returned ' + res.status);
     const data = await res.json();
-    $("status").textContent = data.counts ? `${data.counts.ranked} ranked · ${data.counts.rejected} rejected/excluded · ${data.counts.legs_found} legs found for ${data.query.origin} → ${data.query.destination}.` : "";
-    render(data);
+    typing.remove();
+    addAssistant(renderAssistant(data));
   } catch (e) {
-    $("status").textContent = "Could not reach the API. Is the server running (uvicorn api:app)? " + e.message;
-    $("results").innerHTML = `<div class="card empty">Could not load results. Check the server is running and try a demo preset.</div>`;
-  }
+    typing.remove();
+    addAssistant('<p>Sorry, I could not reach the planning service. Is the server running (<code>uvicorn api:app</code>)? ' + esc(e.message) + '</p>');
+  } finally { sendBtn.disabled = false; msgEl.focus(); }
 }
 
-$("planForm").addEventListener("submit", (e) => { e.preventDefault(); submit(); });
-$("presetDiaspora").addEventListener("click", async () => {
-  const presets = await (await fetch("/api/demo-presets")).json();
-  const p = presets.presets.find(x => x.id === "diaspora-bom-pnq");
-  setForm(p.query); submit(p.query);
+document.getElementById('chatForm').addEventListener('submit', (e) => { e.preventDefault(); sendMessage(msgEl.value); });
+msgEl.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(msgEl.value); }
 });
-$("presetBudget").addEventListener("click", async () => {
-  const presets = await (await fetch("/api/demo-presets")).json();
-  const p = presets.presets.find(x => x.id === "pnq-del-budget");
-  setForm(p.query, ""); submit(p.query);
+msgEl.addEventListener('input', () => { msgEl.style.height = 'auto'; msgEl.style.height = Math.min(msgEl.scrollHeight, 120) + 'px'; });
+document.querySelectorAll('.chip').forEach(chip => {
+  chip.addEventListener('click', () => sendMessage(chip.textContent.trim()));
 });
-$("clearArrival").addEventListener("click", () => { $("arrival").value = ""; });
+
+// Welcome message
+addAssistant('<p>Hi, I am Bhraman! Tell me where you need to go, and I will plan the whole trip door to door.</p><p class="meta">Try a suggestion below, or just type something like: “I have to go from Mumbai to Pune, I landed at 06:00, help me plan”.</p>');
+msgEl.focus();
 </script>
 </body>
 </html>
