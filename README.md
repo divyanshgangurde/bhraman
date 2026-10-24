@@ -80,3 +80,19 @@ problem, not a code problem — see the verdict in `ARCHITECTURE.md`.
 Scaffold: architecture, shared state, three agents, deterministic ranker,
 Raw-RAG memory, provider interfaces with working offline providers, eval
 harness, tests. Live adapters are interface-complete stubs.
+
+## Frontend + API (new)
+
+Single-page frontend + FastAPI wrapper over the unchanged backend.
+Full instructions: see `README-FRONTEND.md`.
+
+```bash
+pip install -r requirements.txt
+uvicorn api:app --reload
+# Frontend: http://127.0.0.1:8000/
+# Health:   http://127.0.0.1:8000/health
+# Presets:  http://127.0.0.1:8000/api/demo-presets
+# Plan:     POST http://127.0.0.1:8000/api/plan
+```
+
+Sample data only (BOM → PNQ and PNQ → DEL); no live Duffel / LiteAPI yet.
