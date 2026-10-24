@@ -1,0 +1,5 @@
+# Runtime
+pydantic>=2.0
+langgraph>=0.2        # supervisor graph; the pipeline also runs without it
+# Dev/test
+pytest>=8.0
